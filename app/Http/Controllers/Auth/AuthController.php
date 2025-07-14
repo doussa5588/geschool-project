@@ -7,86 +7,88 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    public function showLogin()
+    /**
+     * Module d'Authentification - Développé par SADOU MBALLO
+     * Responsable du projet GeSchool
+     */
+
+    public function showLoginForm()
     {
         return view('auth.login');
     }
 
     public function login(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'email' => 'required|email',
-            'password' => 'required',
+            'password' => 'required|min:6',
         ]);
 
-        $credentials = $request->only('email', 'password');
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
 
-        if (Auth::attempt($credentials, $request->filled('remember'))) {
-            $request->session()->regenerate();
-            
+        $credentials = $request->only('email', 'password');
+        
+        if (Auth::attempt($credentials)) {
             $user = Auth::user();
             
             // Redirection selon le rôle
-            if ($user->hasRole('admin')) {
-                return redirect()->intended(route('admin.dashboard'));
-            } elseif ($user->hasRole('teacher')) {
-                return redirect()->intended(route('teacher.dashboard'));
-            } elseif ($user->hasRole('student')) {
-                return redirect()->intended(route('student.dashboard'));
+            switch ($user->role) {
+                case 'admin':
+                    return redirect()->route('admin.dashboard');
+                case 'professeur':
+                    return redirect()->route('professeur.dashboard');
+                case 'etudiant':
+                    return redirect()->route('etudiant.dashboard');
+                case 'parent':
+                    return redirect()->route('parent.dashboard');
+                default:
+                    return redirect()->route('home');
             }
-            
-            return redirect()->intended('/');
         }
 
-        return back()->withErrors([
-            'email' => 'Les informations d\'identification ne correspondent pas à nos enregistrements.',
-        ])->onlyInput('email');
+        return back()->withErrors(['email' => 'Identifiants incorrects.']);
     }
 
-    public function showRegister()
+    public function logout()
+    {
+        Auth::logout();
+        return redirect()->route('login')->with('success', 'Déconnexion réussie');
+    }
+
+    public function showRegisterForm()
     {
         return view('auth.register');
     }
 
     public function register(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-            'date_of_birth' => 'nullable|date',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|in:admin,professeur,etudiant,parent',
         ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'date_of_birth' => $request->date_of_birth,
+            'role' => $request->role,
+            'status' => 'actif',
         ]);
 
-        // Assigner le rôle étudiant par défaut
-        $user->assignRole('student');
-
         Auth::login($user);
-
-        return redirect()->route('student.dashboard')
-            ->with('success', 'Compte créé avec succès !');
-    }
-
-    public function logout(Request $request)
-    {
-        Auth::logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect('/')->with('success', 'Vous avez été déconnecté avec succès.');
+        
+        return redirect()->route('dashboard')->with('success', 'Inscription réussie');
     }
 }

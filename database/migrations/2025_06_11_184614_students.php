@@ -6,24 +6,29 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Migration Étudiants - Architecture par SADOU MBALLO
+     */
+    
     public function up()
     {
-        Schema::create('students', function (Blueprint $table) {
+        Schema::create('etudiants', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('student_number')->unique();
-            $table->foreignId('class_id')->constrained('classes');
-            $table->string('academic_year');
-            $table->date('enrollment_date');
-            $table->enum('status', ['active', 'inactive', 'graduated', 'suspended'])->default('active');
-            $table->string('parent_contact')->nullable();
-            $table->string('emergency_contact')->nullable();
+            $table->string('numero_etudiant')->unique();
+            $table->foreignId('classe_id')->nullable()->constrained()->onDelete('set null');
+            $table->date('date_inscription');
+            $table->enum('statut_inscription', ['inscrit', 'diplome', 'abandonne'])->default('inscrit');
+            $table->string('niveau_precedent')->nullable();
+            $table->text('observations')->nullable();
+            $table->decimal('frais_scolarite', 10, 2)->default(0);
+            $table->enum('statut_paiement', ['paye', 'partiel', 'impaye'])->default('impaye');
             $table->timestamps();
         });
     }
 
     public function down()
     {
-        Schema::dropIfExists('students');
+        Schema::dropIfExists('etudiants');
     }
 };

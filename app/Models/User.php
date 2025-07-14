@@ -6,24 +6,27 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
-use Carbon\Carbon;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable;
+
+    /**
+     * Modèle User - Architecture par SADOU MBALLO
+     * Responsable du projet GeSchool
+     */
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'phone',
-        'address',
-        'date_of_birth',
-        'profile_photo',
-        'is_active',
-        'gender',
+        'role',
+        'status',
+        'telephone',
+        'adresse',
+        'date_naissance',
+        'genre',
+        'photo',
     ];
 
     protected $hidden = [
@@ -33,158 +36,54 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'date_of_birth' => 'date',
-        'is_active' => 'boolean',
+        'date_naissance' => 'date',
     ];
 
     // Relations
-    public function student()
+    public function etudiant()
     {
-        return $this->hasOne(Student::class);
+        return $this->hasOne(Etudiant::class);
     }
 
-    public function teacher()
+    public function professeur()
     {
-        return $this->hasOne(Teacher::class);
-    }
-
-    public function sentMessages()
-    {
-        return $this->hasMany(Message::class, 'sender_id');
-    }
-
-    public function receivedMessages()
-    {
-        return $this->hasMany(Message::class, 'recipient_id');
+        return $this->hasOne(Professeur::class);
     }
 
     // Accesseurs
-    
-    /**
-     * Get the user's full name (alias pour name)
-     */
     public function getFullNameAttribute()
     {
         return $this->name;
     }
 
-    /**
-     * Get the user's age from date of birth
-     */
     public function getAgeAttribute()
     {
-        if (!$this->date_of_birth) {
-            return null;
-        }
-        return Carbon::parse($this->date_of_birth)->age;
+        return $this->date_naissance ? $this->date_naissance->age : null;
     }
 
-    /**
-     * Get the user's initials for avatar
-     */
-    public function getInitialsAttribute()
+    // Méthodes utilitaires
+    public function isAdmin()
     {
-        $names = explode(' ', $this->name);
-        $initials = '';
-        foreach ($names as $name) {
-            $initials .= strtoupper(substr($name, 0, 1));
-        }
-        return substr($initials, 0, 2);
+        return $this->role === 'admin';
     }
 
-    /**
-     * Get formatted birth date
-     */
-    public function getFormattedBirthDateAttribute()
+    public function isProfesseur()
     {
-        if (!$this->date_of_birth) {
-            return 'Non définie';
-        }
-        return Carbon::parse($this->date_of_birth)->format('d/m/Y');
+        return $this->role === 'professeur';
     }
 
-    /**
-     * Check if user has profile photo
-     */
-    public function getHasPhotoAttribute()
+    public function isEtudiant()
     {
-        return !empty($this->profile_photo);
+        return $this->role === 'etudiant';
     }
 
-    /**
-     * Get profile photo URL or generate avatar
-     */
-    public function getProfilePhotoUrlAttribute()
+    public function isParent()
     {
-        if ($this->profile_photo) {
-            return asset('storage/' . $this->profile_photo);
-        }
-        
-        // Generate avatar URL using UI Avatars
-        return "https://ui-avatars.com/api/?name=" . urlencode($this->name) . "&background=059669&color=fff&size=200";
+        return $this->role === 'parent';
     }
 
-    /**
-     * Get user's role names
-     */
-    public function getRoleNamesAttribute()
+    public function isActif()
     {
-        return $this->roles->pluck('name')->toArray();
-    }
-
-    /**
-     * Check if user is active
-     */
-    public function getIsActiveStatusAttribute()
-    {
-        return $this->is_active;
-    }
-
-    /**
-     * Get formatted phone number
-     */
-    public function getFormattedPhoneAttribute()
-    {
-        if (!$this->phone) {
-            return 'Non défini';
-        }
-        
-        // Format for Senegalese phone numbers
-        $phone = preg_replace('/[^0-9]/', '', $this->phone);
-        if (strlen($phone) === 9 && substr($phone, 0, 1) === '7') {
-            return '+221 ' . substr($phone, 0, 2) . ' ' . substr($phone, 2, 3) . ' ' . substr($phone, 5, 4);
-        }
-        
-        return $this->phone;
-    }
-
-    // Scopes
-
-    /**
-     * Scope for active users
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    /**
-     * Scope for users with specific role
-     */
-    public function scopeWithRole($query, $role)
-    {
-        return $query->whereHas('roles', function($q) use ($role) {
-            $q->where('name', $role);
-        });
-    }
-
-    /**
-     * Scope for search
-     */
-    public function scopeSearch($query, $search)
-    {
-        return $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
+        return $this->status === 'actif';
     }
 }
