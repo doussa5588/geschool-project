@@ -4,33 +4,25 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
 
 class RoleMiddleware
 {
     /**
-     * Handle an incoming request.
+     * Middleware de Sécurité - Développé par SADOU MBALLO
+     * Contrôle d'accès basé sur les rôles
      */
-    public function handle(Request $request, Closure $next, string $role): Response
+    
+    public function handle(Request $request, Closure $next, ...$roles)
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return redirect()->route('login');
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
         
-        // Vérifier si l'utilisateur a le rôle requis
-        if (!$user->hasRole($role)) {
-            // Rediriger vers le bon dashboard selon le rôle de l'utilisateur
-            if ($user->hasRole('admin')) {
-                return redirect()->route('admin.dashboard');
-            } elseif ($user->hasRole('teacher')) {
-                return redirect()->route('teacher.dashboard');
-            } elseif ($user->hasRole('student')) {
-                return redirect()->route('student.dashboard');
-            }
-            
-            abort(403, 'Accès non autorisé à cette section.');
+        if (!in_array($user->role, $roles)) {
+            abort(403, 'Accès non autorisé');
         }
 
         return $next($request);

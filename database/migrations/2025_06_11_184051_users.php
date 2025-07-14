@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Migration Users - Développée par SADOU MBALLO
+     * Architecture de base du système GeSchool
+     */
+    
     public function up()
     {
         Schema::create('users', function (Blueprint $table) {
@@ -14,11 +19,13 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('phone')->nullable();
-            $table->text('address')->nullable();
-            $table->date('date_of_birth')->nullable();
-            $table->string('profile_photo')->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->enum('role', ['admin', 'professeur', 'etudiant', 'parent'])->default('etudiant');
+            $table->enum('status', ['actif', 'inactif', 'suspendu'])->default('actif');
+            $table->string('telephone')->nullable();
+            $table->text('adresse')->nullable();
+            $table->date('date_naissance')->nullable();
+            $table->enum('genre', ['masculin', 'feminin'])->nullable();
+            $table->string('photo')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
