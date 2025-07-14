@@ -307,6 +307,34 @@ class TeacherController extends Controller
         }
     }
 
+
+    /**
+     * Génère un numéro employé unique.
+     *
+     * @return string
+     */
+    protected function generateEmployeeNumber()
+    {
+        $prefix = 'EMP'; // Préfixe fixe, modifiable selon vos besoins
+
+        // Récupérer le dernier numéro employé existant (ex: EMP00001)
+        $lastEmployeeNumber = Teacher::where('employee_number', 'like', $prefix . '%')
+            ->orderBy('employee_number', 'desc')
+            ->value('employee_number');
+
+        if ($lastEmployeeNumber) {
+            // Extraire la partie numérique et incrémenter
+            $number = (int) substr($lastEmployeeNumber, strlen($prefix));
+            $number++;
+        } else {
+            $number = 1;
+        }
+
+        // Formater avec des zéros à gauche (ex: EMP00001)
+        return $prefix . str_pad($number, 5, '0', STR_PAD_LEFT);
+    }
+
+
     /**
      * Restore a teacher.
      */

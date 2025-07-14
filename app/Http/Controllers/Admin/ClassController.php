@@ -484,4 +484,34 @@ class ClassController extends Controller
         // TODO: Implémenter la génération de rapport de présence PDF
         return response()->json(['message' => 'Rapport de présence en cours de développement']);
     }
+
+
+    public function apiByDepartment(Department $department)
+    {
+        try {
+            $classes = Classe::where('department_id', $department->id)
+                ->where('is_active', true)
+                ->withCount('students')
+                ->with('level')
+                ->get();
+
+            $result = $classes->map(function ($class) {
+                return [
+                    'id' => $class->id,
+                    'name' => $class->name,
+                    'level_name' => $class->level ? $class->level->name : '',
+                    'capacity' => $class->capacity,
+                    'current_students' => $class->students_count,
+                ];
+            });
+
+            return response()->json($result);
+
+        } catch (\Exception $e) {
+            \Log::error('Erreur apiByDepartment: ' . $e->getMessage());
+            return response()->json(['error' => 'Erreur lors du chargement des classes'], 500);
+        }
+    }
+
+
 }

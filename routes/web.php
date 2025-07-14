@@ -151,6 +151,8 @@ Route::middleware(['auth'])->group(function () {
 
             Route::get('/dashboard/stats', [AdminController::class, 'apiStats'])->name('dashboard.stats');
             Route::get('/departments/stats', [DepartmentController::class, 'apiStats'])->name('departments.stats');
+
+            Route::get('/classes/by-department/{department}', [ClassController::class, 'apiByDepartment'])->name('classes.by-department');
         });
     });
 

@@ -153,11 +153,6 @@
                             <a href="{{ route('admin.classes.index') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-circle"></i> Effacer
                             </a>
-
-                            <!-- Bouton Export -->
-                            <button type="button" class="btn btn-success" onclick="exportClasses('xlsx')">
-                                <i class="bi bi-file-earmark-excel"></i> Exporter Excel
-                            </button>
                         </div>
                     </div>
                 </div>
